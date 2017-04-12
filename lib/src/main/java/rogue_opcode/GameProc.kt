@@ -5,7 +5,7 @@
 // This software is part of the Rogue-Opcode game framework. It is distributable
 // under the terms of a modified MIT License. You should have received a copy of
 // the license in the file LICENSE.md. If not, see:
-// <http://code.google.com/p/rogue-op/wiki/LICENSE>
+// <https://github.com/IonoclastBrigham/RogueOp/blob/master/LICENSE.md>
 //
 // Formatting:
 // 80 cols ; tabwidth 4
@@ -44,7 +44,7 @@ import rogue_opcode.soundy.SoundEffect
 // will be delayed by about a (critical) 1/2 second.
 // I'd like to make this some kind of parameter but don't know how to do that
 // with interfaces... -CRT
-open class GameProc : Activity(), Runnable, OnGestureListener {
+abstract class GameProc : Activity(), Runnable, OnGestureListener {
 	companion object {
 		const val TAG = "Rogue-Op"
 
@@ -201,16 +201,13 @@ open class GameProc : Activity(), Runnable, OnGestureListener {
 	}
 
 	/** Override this in your derived class to make stuff.  */
-	fun InitializeOnce() {
-	}
+	abstract fun InitializeOnce()
 
 	/** Override this to hook the resume event.  */
-	fun InitializeOnResume() {
-	}
+	abstract fun InitializeOnResume()
 
 	/** Override this to hook the shutdown event.  */
-	fun Shutdown() {
-	}
+	abstract fun Shutdown()
 
 	// game update loop ////////////////////////////////////////////////////////
 
