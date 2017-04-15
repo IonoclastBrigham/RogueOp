@@ -64,14 +64,13 @@ abstract class AudioResource constructor(@AnyRes pResID: Int) {
 		 */
 		@JvmOverloads fun ICanHas(pResID: Int, pType: AudioType = AudioType.MUSIC)
 			= when(pType) {
-				AudioResource.AudioType.EFFECT -> SoundEffect(pResID)
-				AudioResource.AudioType.MUSIC -> MusicTrack(pResID)
-				AudioResource.AudioType.SYNTH_EFFECT -> FXR(pResID)
-				AudioResource.AudioType.SYNTH_MUSIC -> Soundy(pResID)
+				AudioType.EFFECT -> SoundEffect(pResID)
+				AudioType.MUSIC -> MusicTrack(pResID)
+				AudioType.SYNTH_EFFECT -> FXR(pResID)
+				AudioType.SYNTH_MUSIC -> Soundy(pResID)
 			}
 
 		fun Die() {
-			// we are shutting down, so we don't care about performance too much
 			for(tAR in sAllARs) tAR.die()
 		}
 

@@ -61,7 +61,7 @@ open class ScreenElement : ActionElement {
 	//TODO - add coordinate scaling and accessor methods
 
 
-	protected var mVisible: Boolean = false
+	open var Visible: Boolean = false
 
 	var mSelfGuided: Boolean = false
 	lateinit internal var mSelfGuidedDestination: XYf
@@ -99,10 +99,11 @@ open class ScreenElement : ActionElement {
 	}
 
 	protected fun init(pResourceID: Int, pText: String?, pX: Int, pY: Int) {
-		if(pResourceID != 0)
+		if(pResourceID != 0) {
 			currentGR = GraphicResource.FindGR(pResourceID)
-		else
+		} else {
 			currentGR = null
+		}
 
 		mCurrentGRResourceID = pResourceID
 
@@ -113,7 +114,7 @@ open class ScreenElement : ActionElement {
 		mText = pText
 
 		mDrawCentered = true
-		mVisible = true
+		Visible = true
 		mSelfGuided = false
 		mTopmost = false
 
@@ -156,21 +157,13 @@ open class ScreenElement : ActionElement {
 	// public interfaces ///////////////////////////////////////////////////////
 
 	fun Hibernate() {
-		Visible(false) // Turn off drawing
+		Visible = false // Turn off drawing
 		mActive = false // stop calling update function
 	}
 
 	fun Wake() {
-		Visible(true)
+		Visible = true
 		mActive = true
-	}
-
-	fun Visible(): Boolean {
-		return mVisible
-	}
-
-	open fun Visible(pVisible: Boolean) {
-		mVisible = pVisible
 	}
 
 	fun Topmost(): Boolean {
@@ -202,8 +195,7 @@ open class ScreenElement : ActionElement {
 	}
 
 	fun WithinRange(pTarget: XYf, pXRadius: Float, pYRadius: Float): Boolean? {
-		if(!Visible())
-			return false
+		if(!Visible) return false
 
 		val tXYf = XYf(mPos)
 
@@ -212,12 +204,10 @@ open class ScreenElement : ActionElement {
 			tXYf.y += (Height() / 2).toFloat()
 		}
 
-		if(tXYf.x < pTarget.x + pXRadius &&
+		return (tXYf.x < pTarget.x + pXRadius &&
 				tXYf.x > pTarget.x - pXRadius &&
 				tXYf.y < pTarget.y + pYRadius &&
 				tXYf.y > pTarget.y - pYRadius)
-			return true
-		return false
 	}
 
 	fun DrawCentered(pDrawCentered: Boolean) {
@@ -229,11 +219,11 @@ open class ScreenElement : ActionElement {
 	}
 
 	open fun Width(): Int {
-		return if(currentGR != null) currentGR!!.VirtualWidth() else 0
+		return currentGR?.VirtualWidth() ?: 0
 	}
 
 	open fun Height(): Int {
-		return if(currentGR != null) currentGR!!.VirtualHeight() else 0
+		return currentGR?.VirtualHeight() ?: 0
 	}
 
 	fun Text() = mText
@@ -274,6 +264,9 @@ open class ScreenElement : ActionElement {
 		mTextPaint = pPaint
 	}
 
+	var onPreUpdate: (ScreenElement.()->Unit)? = null
+	var onPostUpdate: (ScreenElement.()->Unit)? = null
+
 	/**
 	 * AnimatedView will call this repeatedly during the program's lifetime
 	 * automatically. Override in your derived class to do something exciting.
@@ -281,25 +274,34 @@ open class ScreenElement : ActionElement {
 	 * @see rogue_opcode.ActionElement.Update
 	 */
 	override fun Update() {
+		onPreUpdate?.invoke(this)
+
 		if(mSelfGuided) {
-			val xDist = (mSelfGuidedDestination.x - mPos.x).toDouble()
-			val yDist = (mSelfGuidedDestination.y - mPos.y).toDouble()
+			val xOff = (mSelfGuidedDestination.x - mPos.x).toDouble()
+			val yOff = (mSelfGuidedDestination.y - mPos.y).toDouble()
+			val tDistSq = xOff * xOff + yOff * yOff
 
-			val tDistance = Math.sqrt(Math.pow(xDist, 2.0) + Math.pow(yDist, 2.0))
+			// ease out as we reach destination
+			if(tDistSq != 0.0) {
+				val tDist = Math.sqrt(tDistSq)
+				mVel.x = (xOff / tDist).toFloat() * mSelfGuidedSpeed
+				mVel.y = (yOff / tDist).toFloat() * mSelfGuidedSpeed
 
-			if(tDistance != 0.0) {
-				mVel.x = (xDist / tDistance).toFloat() * mSelfGuidedSpeed
-				mVel.y = (yDist / tDistance).toFloat() * mSelfGuidedSpeed
-			}
+				if(tDistSq <= mSelfGuidedSpeed) {
+					mPos.x = mSelfGuidedDestination.x
+					mPos.y = mSelfGuidedDestination.y
 
-			mPos.add(mVel)
-
-			if(tDistance <= mSelfGuidedSpeed) {
-				mSelfGuided = false
-				mPos.x = mSelfGuidedDestination.x
-				mPos.y = mSelfGuidedDestination.y
+					mSelfGuided = false
+					mVel.Set(XYZf.ZERO)
+				}
 			}
 		}
+
+		if(mVel != XYZf.ZERO) {
+			mPos.add(mVel)
+		}
+
+		onPostUpdate?.invoke(this)
 	}
 
 	/**

@@ -24,16 +24,17 @@ open class XYZf
 	                          var z: Float = 0.0f) : XYf(pX, pY) {
 	companion object {
 		private val serialVersionUID = 4186038949433460479L
+
+		val ZERO = XYZf()
+		val X_HAT = XYZf(1f, 0f, 0f)
+		val Y_HAT = XYZf(0f, 1f, 0f)
+		val Z_HAT = XYZf(0f, 0f, 1f)
 	}
 
 
 	constructor(pSource: XYZf) : this(pSource.x, pSource.y, pSource.z)
 
-	override fun toString(): String {
-		return "($x, $y, $z)"
-	}
-
-	fun set(pSource: XYZf) {
+	fun Set(pSource: XYZf) {
 		x = pSource.x
 		y = pSource.y
 		z = pSource.z
@@ -96,5 +97,16 @@ open class XYZf
 		y /= tMag
 		z /= tMag
 		return this
+	}
+
+	// Any overrides ///////////////////////////////////////////////////////////
+
+	override fun equals(other: Any?) = when(other) {
+		is XYZf -> x == other.x && y == other.y && z == other.z
+		else -> false
+	}
+
+	override fun toString(): String {
+		return "($x, $y, $z)"
 	}
 }

@@ -45,8 +45,7 @@ abstract class ActionElement : Serializable {
 	}
 
 	/** override in your derived class to do something exciting.  */
-	open fun Update() {
-	}
+	abstract fun Update()
 
 	/** override in your derived class to do something exciting.  */
 	fun Reset() {

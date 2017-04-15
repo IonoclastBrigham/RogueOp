@@ -169,20 +169,21 @@ class TextSE(pText: String, pX: Float, pY: Float, pWidth: Int, pHeight: Int = -1
 		mEditable = pEditable
 	}
 
-	override fun Visible(pVisible: Boolean) {
-		super.Visible(pVisible)
+	override var Visible = false
+		set(pVisible) {
+			super.Visible = pVisible
 
-		if(mInEditMode) {
-			GameProc.sOnly.HideTextEditor(this)
-			mInEditMode = false
+			if(mInEditMode) {
+				GameProc.sOnly.HideTextEditor(this)
+				mInEditMode = false
+			}
 		}
-	}
 
 	override fun Update() {
 		if(!mEditable) return
 
 		val tProc = GameProc.sOnly
-		val tTouch = tProc.mTouchState
+		val tTouch = tProc.touchState
 		try {
 			if(mInEditMode) {
 				if(tProc.mEditTextParams?.mCurrentTE === this) {
@@ -196,7 +197,7 @@ class TextSE(pText: String, pX: Float, pY: Float, pWidth: Int, pHeight: Int = -1
 						tProc.HideTextEditor(this)
 					}
 				}
-			} else if(tTouch.Is(TouchState.SINGLE_TAP) && Visible()) {
+			} else if(tTouch.Is(TouchState.SINGLE_TAP) && Visible) {
 				if (WithinRange(tTouch.MainTouchPos())) {
 					mInEditMode = true
 					tProc.ShowTextEditor(this, mPos, mWidth, mHeight)

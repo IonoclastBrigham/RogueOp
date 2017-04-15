@@ -14,12 +14,51 @@
 
 package com.ionoclast.rogue_opcode.sandbox
 
-import rogue_opcode.GameProc
+import rogue_opcode.*
+import rogue_opcode.geometrics.XYZf
+import java.util.*
 
 
 class SandboxActivity : GameProc() {
+	private lateinit var mAudio: AudioResource
+
+	private var mBoopers = ArrayList<ScreenElement>()
+
+	inner class BooperSpawner : ActionElement() {
+		override fun Update() {
+			if(touchState.Is(TouchState.SINGLE_TAP)) {
+				Spawn(touchState.GetMainX().toInt(),
+				      touchState.GetMainY().toInt())
+			}
+		}
+
+		fun Spawn(pXPos: Int, pYPos: Int) {
+			ScreenElement(R.mipmap.ic_launcher_round, pXPos, pYPos).run {
+				mVel = XYZf(rand(), rand())
+				onPostUpdate = {
+					if (mPos.x < 0f || mPos.x > AnimatedView.sOnly.ScreenWidth()) {
+						mVel.x = -mVel.x
+						mAudio.Play()
+					}
+					if (mPos.y < 0f || mPos.y > AnimatedView.sOnly.ScreenHeight()) {
+						mVel.y = -mVel.y
+						mAudio.Play()
+					}
+				}
+				Wake()
+				mBoopers.add(this)
+			}
+		}
+
+		private fun rand() = ((Math.random() * 50) - 25).toFloat()
+	}
+
 	override fun InitializeOnce() {
-		//
+		mAudio = AudioResource.ICanHas(R.raw.impact, AudioResource.AudioType.EFFECT)
+		BooperSpawner().run {
+			Spawn(100, 100)
+			Active(true)
+		}
 	}
 
 	override fun InitializeOnResume() {
@@ -27,6 +66,6 @@ class SandboxActivity : GameProc() {
 	}
 
 	override fun Shutdown() {
-		//
+		mAudio.Stop()
 	}
 }

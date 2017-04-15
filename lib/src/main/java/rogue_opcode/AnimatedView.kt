@@ -81,7 +81,7 @@ open class AnimatedView(pContext: Context)
 
 	init {
 		sOnly = this
-		this.id = 0xdeadbeef.toInt() // set ID, so OS will manage restoring state
+		id = 0xdeadbeef.toInt() // set ID, so OS will manage restoring state
 
 		// init debug stats
 		mPaint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -125,10 +125,7 @@ open class AnimatedView(pContext: Context)
 		GameProc.sOnly.mCurrentKey = pKeyCode
 		GameProc.sOnly.mKeys[pKeyCode] = true
 
-		if(pKeyCode == KeyEvent.KEYCODE_BACK)
-			return false
-
-		return true
+		return (pKeyCode != KeyEvent.KEYCODE_BACK)
 	}
 
 	override fun onKeyUp(pKeyCode: Int, pEvent: KeyEvent): Boolean {
@@ -304,7 +301,7 @@ open class AnimatedView(pContext: Context)
 				drawText("FPS:  " + GameProc.sOnly.FPS(), 10f, 22f, mPaint)
 				drawText("#1:  " + mDebugString1, 10f, 34f, mPaint)
 				drawText("#2:  " + mDebugString2, 10f, 46f, mPaint)
-				drawText(GameProc.sOnly.mTouchState.MainTouchPos().toString(),
+				drawText(GameProc.sOnly.touchState.MainTouchPos().toString(),
 				         10f, 58f, mPaint)
 			}
 		}
@@ -315,7 +312,7 @@ open class AnimatedView(pContext: Context)
 
 	private fun loopAndDrawSEs(pTopmost: Boolean) {
 		for(tSE in sAllSEs) {
-			if(tSE.Visible() && pTopmost == tSE.Topmost()) {
+			if(tSE.Visible && pTopmost == tSE.Topmost()) {
 				ScreenElement.sActiveSECount++
 				tSE.Draw()
 			}

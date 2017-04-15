@@ -41,12 +41,12 @@ class GraphicResource : Serializable {
 
 		//Find the GR with this res id and set its mImage bitmap to null
 		fun Unload(pResourceID: Int) {
-			val tGR: GraphicResource?
-
-			tGR = sAllGRs[pResourceID]
-			if(tGR != null && tGR.mImage != null) {
-				tGR.mImage!!.recycle()
-				tGR.mImage = null
+			sAllGRs[pResourceID]?.run {
+				mImage?.let {
+					it.recycle()
+					mImage = null
+				}
+				sAllGRs.remove(pResourceID)
 			}
 		}
 
@@ -85,13 +85,9 @@ class GraphicResource : Serializable {
 			return tGR.mResID
 		}
 
-		// static access ///////////////////////////////////////////////////////////
-
 		fun FindGR(pResourceID: Int): GraphicResource? {
-			val tGR = sAllGRs[pResourceID]
 			//TODO - hmmm, this makes it difficult to manage memory but it is a nice feature...
-			//return (tGR != null ? tGR : new GraphicResource(pResourceID));
-			return tGR
+			return sAllGRs[pResourceID] ?: GraphicResource(pResourceID)
 		}
 	}
 

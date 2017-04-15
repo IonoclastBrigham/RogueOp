@@ -1,7 +1,7 @@
 // GameProc.kt
 // Game main logic class
 //
-// Copyright © 2010-2017 Brigham Toskin
+// Copyright © 2010-2017 Christopher R. Tooley, Brigham Toskin
 // This software is part of the Rogue-Opcode game framework. It is distributable
 // under the terms of a modified MIT License. You should have received a copy of
 // the license in the file LICENSE.md. If not, see:
@@ -14,10 +14,6 @@
 
 package rogue_opcode
 
-
-// import dalvik.system.VMRuntime;
-// import com.ngc.MGEPCT.BaG;
-
 import android.app.Activity
 import android.content.Context
 import android.graphics.Color
@@ -29,12 +25,12 @@ import android.view.*
 import android.view.GestureDetector.OnGestureListener
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
-import android.widget.RelativeLayout
+import android.widget.FrameLayout
+import android.widget.FrameLayout.LayoutParams
 import rogue_opcode.geometrics.XYf
 import rogue_opcode.soundy.SoundEffect
 
 
-// import android.view.GestureDetector.OnDoubleTapListener;
 // CRT - the OnDoubleTapListener code works great, but because android is
 // listening for the double tap after a single
 // tap you cannot tap and then flick in rapid succession as is needed in a game
@@ -64,12 +60,12 @@ abstract class GameProc : Activity(), Runnable, OnGestureListener {
 		var mHeight: Int = pHeight
 		var mCurrentTE: TextSE? = pCurrentTE
 		var mEdit: EditText? = null
-		var mRLP: RelativeLayout.LayoutParams? = null
-		var mRL: RelativeLayout? = null
+		var mRLP: LayoutParams? = null
+		var mRL: FrameLayout? = null
 	}
 
 
-	private lateinit var mLayout: RelativeLayout
+	private lateinit var mLayout: FrameLayout
 
 	// stats
 	private var mElapsedTime: Long = 0
@@ -78,7 +74,7 @@ abstract class GameProc : Activity(), Runnable, OnGestureListener {
 	private var mMousePos = XYf()
 
 	private var mMotionDetector: GestureDetector? = null
-	internal var mTouchState = TouchState()
+	val touchState = TouchState()
 
 	internal var mCurrentKey: Int = 0
 	internal var mKeys = BooleanArray(525)
@@ -102,19 +98,25 @@ abstract class GameProc : Activity(), Runnable, OnGestureListener {
 			clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN)
 		}
 
-		mLayout = RelativeLayout(this)
+		mLayout = FrameLayout(this).apply {
+			layoutParams = LayoutParams(LayoutParams.MATCH_PARENT,
+			                            LayoutParams.MATCH_PARENT)
+		}
+		val tAnimView = AnimatedView(this).apply {
+			layoutParams = LayoutParams(LayoutParams.MATCH_PARENT,
+			                            LayoutParams.MATCH_PARENT)
+		}
+		mLayout.addView(tAnimView)
 		setContentView(mLayout)
-		mLayout.addView(AnimatedView(this))
-		mEditTextParams = null
 
 		// initialize stats
 		mElapsedTime = 0
 		sSeconds = 0
 		sFPS = 0
 
-		// user-provided init code
 		mMotionDetector = GestureDetector(this, this)
 
+		// user-provided init code
 		InitializeOnce()
 	}
 
@@ -253,7 +255,7 @@ abstract class GameProc : Activity(), Runnable, OnGestureListener {
 			if(tAE.Active()) tAE.Update()
 		}
 
-		mTouchState.Clear(true)
+		touchState.Clear(true)
 	}
 
 	//AddView allows the user to pass a view (typically a layout that was inflated from XML) to be added above the normal AnimatedView Surface.
@@ -304,13 +306,13 @@ abstract class GameProc : Activity(), Runnable, OnGestureListener {
 	                             pHeight: Int)
 		= EditableTextPositionParams(pCurrentTE, pPos, pWidth, pHeight).apply {
 			mQueuedViewLocation = pPos
-			mRLP = RelativeLayout.LayoutParams(
-				RelativeLayout.LayoutParams.FILL_PARENT,
-				RelativeLayout.LayoutParams.WRAP_CONTENT)
+			mRLP = FrameLayout.LayoutParams(
+				LayoutParams.MATCH_PARENT,
+				LayoutParams.WRAP_CONTENT)
 			mRLP!!.setMargins(
 				mQueuedViewLocation!!.x.toInt(),
 				mQueuedViewLocation!!.y.toInt(), 0, 0)
-			mRL = RelativeLayout(GameProc.sOnly)
+			mRL = FrameLayout(GameProc.sOnly)
 
 			mRL!!.layoutParams = mRLP
 
@@ -358,14 +360,6 @@ abstract class GameProc : Activity(), Runnable, OnGestureListener {
 
 	// user input callbacks ////////////////////////////////////////////////////
 
-	override fun onTrackballEvent(pEvent: MotionEvent): Boolean {
-		mMousePos.x = (pEvent.x * 100).toInt().toFloat()
-		mMousePos.y = (pEvent.y * 100).toInt().toFloat()
-
-		mMousing = true
-		return true
-	}
-
 	fun Mousing(): Boolean {
 		return mMousing
 	}
@@ -387,12 +381,12 @@ abstract class GameProc : Activity(), Runnable, OnGestureListener {
 
 	override fun onFling(e1: MotionEvent, e2: MotionEvent, velocityX: Float,
 						 velocityY: Float): Boolean {
-		mTouchState.SetState(TouchState.FLING, e1, e2)
+		touchState.SetState(TouchState.FLING, e1, e2)
 		return false
 	}
 
 	override fun onLongPress(e: MotionEvent) {
-		mTouchState.SetState(TouchState.LONG_TOUCH, e, null)
+		touchState.SetState(TouchState.LONG_TOUCH, e, null)
 	}
 
 	override fun onScroll(e1: MotionEvent, e2: MotionEvent, distanceX: Float,
@@ -400,15 +394,20 @@ abstract class GameProc : Activity(), Runnable, OnGestureListener {
 		AnimatedView.sOnly.mDebugString1 = distanceY.toString() + ""
 
 		//if(Math.abs(distanceY) > 1.5f)
-		mTouchState.SetState(TouchState.SCROLL, e1, e2, distanceY, distanceX)
+		touchState.SetState(TouchState.SCROLL, e1, e2, distanceY, distanceX)
 		return false
 	}
 
 	override fun onShowPress(e: MotionEvent) {}
 
 	override fun onSingleTapUp(e: MotionEvent): Boolean {
-		mTouchState.SetState(TouchState.SINGLE_TAP, e, null)
+		touchState.SetState(TouchState.SINGLE_TAP, e, null)
 		return false
+	}
+
+	override fun onBackPressed() {
+		Die()
+		finish()
 	}
 
 	//See notes above about the double tap limitations - OnDoubleTapListener
@@ -416,7 +415,7 @@ abstract class GameProc : Activity(), Runnable, OnGestureListener {
 	 * @Override
 	 * public boolean onDoubleTap(MotionEvent e)
 	 * {
-	 * mTouchState.SetState(TouchState.DOUBLE_TAP, e, null);
+	 * touchState.SetState(TouchState.DOUBLE_TAP, e, null);
 	 * return false;
 	 * }
 	 *
@@ -430,7 +429,7 @@ abstract class GameProc : Activity(), Runnable, OnGestureListener {
 	 * @Override
 	 * public boolean onSingleTapConfirmed(MotionEvent e)
 	 * {
-	 * //mTouchState.SetState(TouchState.SINGLE_TAP, e, null);
+	 * //touchState.SetState(TouchState.SINGLE_TAP, e, null);
 	 * return false;
 	 * }
 	 */

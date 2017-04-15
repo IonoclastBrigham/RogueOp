@@ -59,15 +59,13 @@ class TouchState {
 	}
 
 	fun TouchPos(): XYf {
-		if(mMainMotionEvent == null)
-			return XYf(0f, 0f)
+		if(mMainMotionEvent == null) return XYf(0f, 0f)
 
 		return XYf(mMainMotionEvent!!.x, mMainMotionEvent!!.y)
 	}
 
 	fun SecondaryTouchPos(): XYf {
-		if(mSecondaryMotionEvent == null)
-			return XYf(0f, 0f)
+		if(mSecondaryMotionEvent == null) return XYf(0f, 0f)
 
 		return XYf(mSecondaryMotionEvent!!.x / AnimatedView.sOnly.mPreScaler,
 		           mSecondaryMotionEvent!!.y / AnimatedView.sOnly.mPreScaler)

@@ -15,6 +15,7 @@
 package rogue_opcode.soundy
 
 
+import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.SoundPool
 import android.util.Log
@@ -31,14 +32,16 @@ import rogue_opcode.GameProc
  * playback, including looping, gain, and pan.
  */
 class SoundEffect : AudioResource {
-
 	companion object {
 		/** Default value for unimplemented sound load priority parameter.  */
 		internal val PRIORITY = 1
-		/** Default value for unimplemented resample quality parameter.  */
-		internal val QUALITY = 0
 
-		var sPool: SoundPool? = SoundPool(4, AudioManager.STREAM_MUSIC, QUALITY)
+		var sPool: SoundPool? = SoundPool.Builder()
+			.setMaxStreams(4)
+			.setAudioAttributes(AudioAttributes.Builder()
+				                    .setContentType(AudioManager.STREAM_MUSIC)
+				                    .build())
+			.build()
 
 		fun Die() {
 			val tPool = sPool ?: return
@@ -47,8 +50,6 @@ class SoundEffect : AudioResource {
 			tPool.release()
 			sPool = null
 		}
-
-		// static access ///////////////////////////////////////////////////////////
 
 		/**
 		 * Finds the `AudioResource` associated with the specified `resource` ID, if it exists. Otherwise, constructs a new `SoundEffect` instance and loads the appropriate resource.
@@ -67,8 +68,8 @@ class SoundEffect : AudioResource {
 	// c'tor ///////////////////////////////////////////////////////////////////
 
 	/**
-	 * Constructs a SoundResource object to play the specified sound.
-
+	 * *Constructs an instance to play the specified sound.*
+	 *
 	 * @param pResID resource ID for the desired sound file.
 	 */
 	constructor(pResID: Int) : super(pResID) {
@@ -77,11 +78,9 @@ class SoundEffect : AudioResource {
 	}
 
 	/**
-	 * Constructs a SoundResource object to play the specified sound with the
-	 * specified looping property.
-
+	 * Constructs an instance to play the specified sound, looping as requested.
+	 *
 	 * @param pResID resource ID for the desired sound file.
-	 * *
 	 * @param pLoop whether or not to loop the sound.
 	 */
 	constructor(pResID: Int, pLoop: Boolean) : super(pResID) {
@@ -90,10 +89,9 @@ class SoundEffect : AudioResource {
 	}
 
 	/**
-	 * Loads the sound into memory and decodes it.
-
+	 * *Loads the sound into memory and decodes it.*
+	 *
 	 * @param pResID resource ID for sound file to load.
-	 * *
 	 * @param pLoop -1 for loop, 0 for no loop.
 	 */
 	protected fun load(pResID: Int, pLoop: Int) {
@@ -115,57 +113,44 @@ class SoundEffect : AudioResource {
 	override fun Play() {
 		val lVol = mGain - 0.5f * mPan
 		val rVol = mGain + 0.5f * mPan
-		System.err
-				.println("  SoundEffect.Play(): $mSndID => $mStrmID")
 		mStrmID = sPool!!.play(mSndID, lVol, rVol, PRIORITY, mLoop, 1f)
 	}
 
 	override fun Stop() {
-		Log.d(GameProc.TAG, "  SoundEffect.Stop()")
 		mStrmID = 0
 		sPool!!.stop(mStrmID)
 	}
 
 	override fun Pause() {
-		Log.d(GameProc.TAG, "  SoundEffect.Pause()")
-		if(mStrmID > 0)
-			sPool!!.pause(mStrmID)
+		if(mStrmID > 0) sPool!!.pause(mStrmID)
 	}
 
 	override fun Resume() {
-		Log.d(GameProc.TAG, "  SoundEffect.Resume()")
-		if(mStrmID > 0)
-			sPool!!.resume(mStrmID)
+		if(mStrmID > 0) sPool!!.resume(mStrmID)
 	}
 
 	override fun Gain(pGain: Float) {
-		Log.d(GameProc.TAG, "  SoundEffect.Gain(float)")
 		super.Gain(pGain)
-		if(mStrmID > 0)
+		if(mStrmID > 0) {
 			sPool!!.setVolume(mStrmID, pGain - 0.5f * mPan, pGain + 0.5f * mPan)
+		}
 	}
 
 	override fun Loop(): Boolean {
-		Log.d(GameProc.TAG, "  SoundEffect.Loop()")
 		return mLoop == -1
 	}
 
 	override fun Loop(pLoop: Boolean) {
-		Log.d(GameProc.TAG, "  SoundEffect.Loop(boolean)")
 		mLoop = if(pLoop) -1 else 0 // -1 for loop, 0 for no loop
-		if(mStrmID > 0)
-			sPool!!.setLoop(mStrmID, mLoop)
+		if(mStrmID > 0) sPool!!.setLoop(mStrmID, mLoop)
 	}
 
 	fun Loop(pReplayCount: Int) {
-		Log.d(GameProc.TAG, "  SoundEffect.Loop(int)")
 		mLoop = pReplayCount
-		if(mStrmID > 0)
-			sPool!!.setLoop(mStrmID, pReplayCount)
+		if(mStrmID > 0) sPool!!.setLoop(mStrmID, pReplayCount)
 	}
 
 	override fun Pan(pPan: Float) {
-		Log.d(GameProc.TAG, "  SoundEffect.Pan(float)")
 		super.Pan(pPan)
 		if(mStrmID > 0) {
 			sPool!!.setVolume(mStrmID, mGain - 0.5f * pPan, mGain + 0.5f * pPan)
