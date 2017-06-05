@@ -32,6 +32,8 @@ open class XYZf
 	}
 
 
+
+
 	constructor(pSource: XYZf) : this(pSource.x, pSource.y, pSource.z)
 
 	fun Set(pSource: XYZf) {
@@ -109,4 +111,6 @@ open class XYZf
 	override fun toString(): String {
 		return "($x, $y, $z)"
 	}
+
+	operator fun component3() = z
 }

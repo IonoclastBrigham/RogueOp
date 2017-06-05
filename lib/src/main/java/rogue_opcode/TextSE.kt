@@ -183,52 +183,47 @@ class TextSE(pText: String, pX: Float, pY: Float, pWidth: Int, pHeight: Int = -1
 		if(!mEditable) return
 
 		val tProc = GameProc.sOnly
-		val tTouch = tProc.touchState
-		try {
-			if(mInEditMode) {
-				if(tProc.mEditTextParams?.mCurrentTE === this) {
-					set_text(tProc.mEditTextParams?.mEdit?.text.toString())
-				}
+		if(mInEditMode) {
+			if(tProc.mEditTextParams?.mCurrentTE === this) {
+				set_text(tProc.mEditTextParams?.mEdit?.text.toString())
+			}
 
-				if(tTouch.Is(TouchState.SINGLE_TAP)) {
-					if(!WithinRange(tTouch.MainTouchPos())) {
-						mInEditMode = false
-						Dirty(true)
-						tProc.HideTextEditor(this)
-					}
-				}
-			} else if(tTouch.Is(TouchState.SINGLE_TAP) && Visible) {
-				if (WithinRange(tTouch.MainTouchPos())) {
-					mInEditMode = true
-					tProc.ShowTextEditor(this, mPos, mWidth, mHeight)
+			if(TouchState.Is(TouchState.SINGLE_TAP)) {
+				if(!WithinRange(TouchState.MainTouchPos())) {
+					mInEditMode = false
+					Dirty(true)
+					tProc.HideTextEditor(this)
 				}
 			}
-		} catch(e: Exception) {
+		} else if(TouchState.Is(TouchState.SINGLE_TAP) && Visible) {
+			if (WithinRange(TouchState.MainTouchPos())) {
+				mInEditMode = true
+				tProc.ShowTextEditor(this, mPos, mWidth, mHeight)
+			}
 		}
 	}
 
 
-	override fun Draw() {
-		val tCanvas = AnimatedView.sCurrentCanvas
-		val tX = mPos.x// * AnimatedView.sOnly.mPreScaler;
-		val tY = mPos.y// * AnimatedView.sOnly.mPreScaler;
+	override fun Draw(pCanvas: Canvas, pPreScaler: Float, pDefaultPaint: Paint) {
+		val tX = mPos.x// * pPreScaler;
+		val tY = mPos.y// * pPreScaler;
 
-		tCanvas!!.save()
-		tCanvas.scale(AnimatedView.sOnly.mPreScaler,
-				AnimatedView.sOnly.mPreScaler)
+		pCanvas.save()
+		pCanvas.scale(pPreScaler, pPreScaler)
 
-		tCanvas.translate(tX, tY)
-		tCanvas.drawRoundRect(mDisplayRect, 10f, 10f, sFillPaint!!)
-		tCanvas.drawText(Title(), 10f, -2f, sLabelTextPaint!!)
-		tCanvas.translate((sTextMargin + sTextMargin + mIconWidth).toFloat(), sTextMargin.toFloat())
-		tCanvas.clipRect(mTextClipRect, Region.Op.REPLACE)
-		mTextDL.draw(tCanvas)
-		tCanvas.restore()
+		pCanvas.translate(tX, tY)
+		pCanvas.drawRoundRect(mDisplayRect, 10f, 10f, sFillPaint)
+		pCanvas.drawText(Title(), 10f, -2f, sLabelTextPaint)
+		pCanvas.translate((sTextMargin + sTextMargin + mIconWidth).toFloat(),
+		                  sTextMargin.toFloat())
+		pCanvas.clipRect(mTextClipRect, Region.Op.REPLACE)
+		mTextDL.draw(pCanvas)
+		pCanvas.restore()
 
-		tCanvas.save()
-		val tIconOffset = (AnimatedView.sOnly.mPreScaler * (mIconWidth / 2 + sTextMargin)).toInt()
-		tCanvas.translate(tIconOffset.toFloat(), tIconOffset.toFloat())
-		super.Draw()
-		tCanvas.restore()
+		pCanvas.save()
+		val tIconOffset = (pPreScaler * (mIconWidth / 2 + sTextMargin)).toInt()
+		pCanvas.translate(tIconOffset.toFloat(), tIconOffset.toFloat())
+		super.Draw(pCanvas, pPreScaler, pDefaultPaint)
+		pCanvas.restore()
 	}
 }

@@ -14,8 +14,9 @@
 
 package rogue_opcode
 
+import android.graphics.Canvas
 import android.graphics.Paint
-import rogue_opcode.containers.LazySortedArray
+import rogue_opcode.DrawableElement.Companion.sAllSEs
 import rogue_opcode.geometrics.XYZf
 import rogue_opcode.geometrics.XYf
 
@@ -24,25 +25,14 @@ import rogue_opcode.geometrics.XYf
  * *Generic updateable graphical object class.*
  *
  * Override `Update()` to perform custom movement and animation,
- * or handle user input.
+ * handle user input, update AI, etc.
+ *
  * @see GraphicResource
-
  * @see ActionElement
  */
-open class ScreenElement : ActionElement {
+open class ScreenElement : ActionElement, DrawableElement {
 	companion object {
 		private val serialVersionUID = 8512900123394987036L
-
-		// sorted on Z depth
-		// XXX: may be inefficient; keep an eye on performance
-		val sAllSEs =  LazySortedArray<ScreenElement> { a, b ->
-					when {
-						a.mPos.z > b.mPos.z -> -1
-						a.mPos.z < b.mPos.z -> 1
-						else -> 0
-					}
-				}
-		var sActiveSECount = 0
 	}
 
 
@@ -51,7 +41,7 @@ open class ScreenElement : ActionElement {
 	protected var mCurrentGRResourceID: Int = 0		//Now that GRs can come in and out of scope, mGR is more likely to be null.
 	//If this SE is drawing a null mGR it will try to create a new GR based on this ID.
 
-	var mTopmost: Boolean = false				//If true this will be drawn in the
+	override var Topmost: Boolean = false				//If true this will be drawn in the
 	//mEffectsHookBitmap after all non topmost SEs have been drawn
 
 	lateinit var mPos: XYZf
@@ -61,7 +51,7 @@ open class ScreenElement : ActionElement {
 	//TODO - add coordinate scaling and accessor methods
 
 
-	open var Visible: Boolean = false
+	override var Visible: Boolean = false
 
 	var mSelfGuided: Boolean = false
 	lateinit internal var mSelfGuidedDestination: XYf
@@ -116,16 +106,11 @@ open class ScreenElement : ActionElement {
 		mDrawCentered = true
 		Visible = true
 		mSelfGuided = false
-		mTopmost = false
+		Topmost = false
 
 		mSelfGuidedDestination = XYf()
 
-		try {
-			sAllSEs!!.Append(this)
-		} catch(e: Exception) {
-			e.printStackTrace()
-		}
-
+		sAllSEs.Append(this)
 	}
 
 	//In theory we can call unload on an SE to remove it's reference from the list of all SEs
@@ -164,14 +149,6 @@ open class ScreenElement : ActionElement {
 	fun Wake() {
 		Visible = true
 		mActive = true
-	}
-
-	fun Topmost(): Boolean {
-		return mTopmost
-	}
-
-	fun Topmost(pTopmost: Boolean) {
-		mTopmost = pTopmost
 	}
 
 	fun SetCurrentGR(pResourceID: Int) {
@@ -268,9 +245,9 @@ open class ScreenElement : ActionElement {
 	var onPostUpdate: (ScreenElement.()->Unit)? = null
 
 	/**
-	 * AnimatedView will call this repeatedly during the program's lifetime
+	 * GameProc will call this repeatedly during the program's lifetime
 	 * automatically. Override in your derived class to do something exciting.
-
+	 *
 	 * @see rogue_opcode.ActionElement.Update
 	 */
 	override fun Update() {
@@ -309,23 +286,31 @@ open class ScreenElement : ActionElement {
 	 * derived class to do something more than draw the currentGR at it's
 	 * current `mPos` coordinates.
 	 */
-	open fun Draw() {
-		val tCanvas = AnimatedView.sCurrentCanvas
-		var tX = mPos.x * AnimatedView.sOnly.mPreScaler
-		var tY = mPos.y * AnimatedView.sOnly.mPreScaler
+	override fun Draw(pCanvas: Canvas, pPreScaler: Float, pDefaultPaint: Paint) {
+		var tX = mPos.x * pPreScaler
+		var tY = mPos.y * pPreScaler
 		if(currentGR != null && currentGR!!.Valid()) {
 			if(mDrawCentered) {
 				tX -= (currentGR!!.PhysicalWidth() / 2).toFloat()
 				tY -= (currentGR!!.PhysicalHeight() / 2).toFloat()
 			}
-			tCanvas!!.drawBitmap(currentGR!!.mImage!!, tX, tY, null)
+			pCanvas.drawBitmap(currentGR!!.mImage!!, tX, tY, null)
 		} else {
 			//We are trying to draw an empty GR - lets see if it has recently been loaded
 			SetCurrentGR(mCurrentGRResourceID)
 		}
-		if(mText != null && mText!!.isNotEmpty()) {
-			val tPaint = mTextPaint ?: AnimatedView.sOnly.mPaint
-			tCanvas!!.drawText(mText!!, tX + mTextOffset.x, tY + mTextOffset.y, tPaint)
+		mText?.takeUnless { it.isEmpty() } ?.let { tText ->
+			val tPaint = mTextPaint ?: pDefaultPaint
+			pCanvas.drawText(tText, tX + mTextOffset.x, tY + mTextOffset.y, tPaint)
+		}
+	}
+
+	override fun compareTo(pOther: DrawableElement): Int {
+		val tOtherSE = pOther as? ScreenElement ?: return 0
+		return when {
+			mPos.z > tOtherSE.mPos.z -> -1
+			mPos.z < tOtherSE.mPos.z -> 1
+			else -> 0
 		}
 	}
 }

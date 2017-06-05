@@ -26,9 +26,9 @@ class SandboxActivity : GameProc() {
 
 	inner class BooperSpawner : ActionElement() {
 		override fun Update() {
-			if(touchState.Is(TouchState.SINGLE_TAP)) {
-				Spawn(touchState.GetMainX().toInt(),
-				      touchState.GetMainY().toInt())
+			if(TouchState.Is(TouchState.SINGLE_TAP)) {
+				Spawn(TouchState.GetMainX().toInt(),
+				      TouchState.GetMainY().toInt())
 			}
 		}
 
@@ -36,11 +36,11 @@ class SandboxActivity : GameProc() {
 			ScreenElement(R.mipmap.ic_launcher_round, pXPos, pYPos).run {
 				mVel = XYZf(rand(), rand())
 				onPostUpdate = {
-					if (mPos.x < 0f || mPos.x > AnimatedView.sOnly.ScreenWidth()) {
+					if (mPos.x < 0f || mPos.x > AnimatedView.sOnly!!.ScreenWidth()) {
 						mVel.x = -mVel.x
 						mAudio.Play()
 					}
-					if (mPos.y < 0f || mPos.y > AnimatedView.sOnly.ScreenHeight()) {
+					if (mPos.y < 0f || mPos.y > AnimatedView.sOnly!!.ScreenHeight()) {
 						mVel.y = -mVel.y
 						mAudio.Play()
 					}

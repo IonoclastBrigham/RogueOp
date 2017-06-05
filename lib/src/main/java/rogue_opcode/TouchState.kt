@@ -11,14 +11,13 @@ import rogue_opcode.geometrics.XYf
  *
  * @author Christopher R. Tooley
  */
-class TouchState {
-	companion object {
-		val SINGLE_TAP = 1
-		val DOUBLE_TAP = 2 // these have been removed for performance reasons
-		val FLING = 4
-		val SCROLL = 8 // Think "drag"
-		val LONG_TOUCH = 16
-	}
+object TouchState {
+	const val SINGLE_TAP = 1
+	const val DOUBLE_TAP = 2 // these have been removed for performance reasons
+	const val FLING = 4
+	const val SCROLL = 8 // Think "drag"
+	const val LONG_TOUCH = 16
+
 
 	private var mState: Int = 0
 
@@ -27,8 +26,7 @@ class TouchState {
 	private var mYScrollDist: Float = 0f //holds either the velocity of the fling or the distance of the scroll
 	private var mXScrollDist: Float = 0f //holds either the velocity of the fling or the distance of the scroll
 
-	init { Clear() }
-
+	@Synchronized
 	fun SetState(pState: Int, pMainMotionEvent: MotionEvent,
 	             pSecondaryMotionEvent: MotionEvent, pYScrollDist: Float,
 	             pXScrollDist: Float) {
@@ -37,6 +35,7 @@ class TouchState {
 		mYScrollDist = pYScrollDist
 	}
 
+	@Synchronized
 	fun SetState(pState: Int, pMainMotionEvent: MotionEvent,
 	             pSecondaryMotionEvent: MotionEvent?) {
 		synchronized(this) {
@@ -46,82 +45,76 @@ class TouchState {
 		}
 	}
 
+	@Synchronized
 	fun Clear() {
-		synchronized(this) {
-			mState = 0
-		}
+		mState = 0
+		mMainMotionEvent = null
+		mSecondaryMotionEvent = null
+		mYScrollDist = 0f
+		mXScrollDist = 0f
 	}
 
+	@Synchronized
 	fun Clear(pInternalCall: Boolean) {
-		synchronized(this) {
-			mState = 0
-		}
+		mState = 0
 	}
 
+	@Synchronized
 	fun TouchPos(): XYf {
-		if(mMainMotionEvent == null) return XYf(0f, 0f)
-
-		return XYf(mMainMotionEvent!!.x, mMainMotionEvent!!.y)
+		return mSecondaryMotionEvent?.let { tEvent ->
+			XYf(tEvent.x, tEvent.y)
+		} ?: XYf.ZERO
 	}
 
+	@Synchronized
 	fun SecondaryTouchPos(): XYf {
-		if(mSecondaryMotionEvent == null) return XYf(0f, 0f)
-
-		return XYf(mSecondaryMotionEvent!!.x / AnimatedView.sOnly.mPreScaler,
-		           mSecondaryMotionEvent!!.y / AnimatedView.sOnly.mPreScaler)
+		return mSecondaryMotionEvent?.let { tEvent ->
+			XYf(tEvent.x / AnimatedView.sOnly!!.mPreScaler,
+			    tEvent.y / AnimatedView.sOnly!!.mPreScaler)
+		} ?: XYf.ZERO
 	}
 
+	@Synchronized
 	fun GetXScrollDist(): Float {
 		return mXScrollDist
 	}
 
+	@Synchronized
 	fun GetYScrollDist(): Float {
 		return mYScrollDist
 	}
 
+	@Synchronized
 	fun GetMainX(): Float {
-		if(mMainMotionEvent == null) return 0f
-
-		var tX = 0f
-		synchronized(this) {
-			tX = mMainMotionEvent!!.x / AnimatedView.sOnly.mPreScaler
-		}
-		return tX
+		return mMainMotionEvent?.let { tEvent ->
+			tEvent.x / AnimatedView.sOnly!!.mPreScaler
+		} ?: 0f
 	}
 
+	@Synchronized
 	fun GetMainY(): Float {
-		if(mMainMotionEvent == null) return 0f
-
-		var tY = 0f
-		synchronized(this) {
-			tY = mMainMotionEvent!!.y / AnimatedView.sOnly.mPreScaler
-		}
-		return tY
+		return mMainMotionEvent?.let { tEvent ->
+			tEvent.y / AnimatedView.sOnly!!.mPreScaler
+		} ?: 0f
 	}
 
+	@Synchronized
 	fun MainTouchPos() = XYf(GetMainX(), GetMainY())
 
+	@Synchronized
 	fun GetSecondaryX(): Float {
-		if(mSecondaryMotionEvent == null)
-			return 0f
-
-		var tX = 0f
-		synchronized(this) {
-			tX = mSecondaryMotionEvent!!.x / AnimatedView.sOnly.mPreScaler
-		}
-		return tX
+		return mSecondaryMotionEvent?.let { tEvent ->
+			 mSecondaryMotionEvent!!.x / AnimatedView.sOnly!!.mPreScaler
+		} ?: 0f
 	}
 
+	@Synchronized
 	fun GetSecondaryY(): Float {
-		if(mSecondaryMotionEvent == null)
-			return 0f
-
-		var tY = 0f
-		synchronized(this) {
-			tY = mSecondaryMotionEvent!!.y / AnimatedView.sOnly.mPreScaler
-		}
-		return tY
+		return mSecondaryMotionEvent?.let { tEvent ->
+			mSecondaryMotionEvent!!.y / AnimatedView.sOnly!!.mPreScaler
+		} ?: 0f
 	}
 
+	@Synchronized
 	fun Is(pState: Int) = (mState and pState) != 0
 }

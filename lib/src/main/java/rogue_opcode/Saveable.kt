@@ -37,8 +37,8 @@ import android.content.SharedPreferences.Editor
  * @Override
  * *		   public void InitializeOnce()
  * *		   {
- * *		   AnimatedView.sOnly.NormailzeResolution(BASE_WIDTH, BASE_HEIGHT);
- * *		   AnimatedView.sOnly.Debug(true);
+ * *		   AnimatedView.sOnly!!.NormailzeResolution(BASE_WIDTH, BASE_HEIGHT);
+ * *		   AnimatedView.sOnly!!.Debug(true);
  * *		   }
  * *
  * *		   public void Shutdown()

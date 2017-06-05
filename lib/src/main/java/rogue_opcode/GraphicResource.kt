@@ -134,8 +134,8 @@ class GraphicResource : Serializable {
 		mBaseWidth = mImage!!.width
 		mBaseHeight = mImage!!.height
 		mImage = Bitmap.createScaledBitmap(mImage,
-				(mBaseWidth * AnimatedView.sOnly.mPreScaler).toInt(),
-				(mBaseHeight * AnimatedView.sOnly.mPreScaler).toInt(), true)
+				(mBaseWidth * AnimatedView.sOnly!!.mPreScaler).toInt(),
+				(mBaseHeight * AnimatedView.sOnly!!.mPreScaler).toInt(), true)
 		sAllGRs.put(mResID, this)
 		sUID++
 	}
@@ -156,19 +156,19 @@ class GraphicResource : Serializable {
 		// load image
 		try {
 			val r = GameProc.sOnly.resources
-			var tImage: Bitmap? = BitmapFactory.decodeResource(r, pResourceID, sBitmapOptions)
+			val tImage: Bitmap? = BitmapFactory.decodeResource(r, pResourceID, sBitmapOptions)
 			mBaseWidth = tImage!!.width
 			mBaseHeight = tImage.height
 
 			//scale image
-			if(AnimatedView.sOnly.mPreScaler != 1.0f) {
+			if(AnimatedView.sOnly!!.mPreScaler != 1.0f) {
 				mImage = Bitmap.createScaledBitmap(tImage,
-						(mBaseWidth * AnimatedView.sOnly.mPreScaler).toInt(),
-						(mBaseHeight * AnimatedView.sOnly.mPreScaler).toInt(), true)
+						(mBaseWidth * AnimatedView.sOnly!!.mPreScaler).toInt(),
+						(mBaseHeight * AnimatedView.sOnly!!.mPreScaler).toInt(), true)
 				tImage.recycle()
-				tImage = null
-			} else
+			} else {
 				mImage = tImage
+			}
 
 			// store image
 			sAllGRs.put(pResourceID, this)
@@ -189,10 +189,10 @@ class GraphicResource : Serializable {
 			mBaseHeight = tImage.height
 
 			//scale image
-			if(AnimatedView.sOnly.mPreScaler != 1.0f) {
+			if(AnimatedView.sOnly!!.mPreScaler != 1.0f) {
 				mImage = Bitmap.createScaledBitmap(tImage,
-						(mBaseWidth * AnimatedView.sOnly.mPreScaler).toInt(),
-						(mBaseHeight * AnimatedView.sOnly.mPreScaler).toInt(), true)
+						(mBaseWidth * AnimatedView.sOnly!!.mPreScaler).toInt(),
+						(mBaseHeight * AnimatedView.sOnly!!.mPreScaler).toInt(), true)
 				tImage.recycle()
 			} else {
 				mImage = tImage

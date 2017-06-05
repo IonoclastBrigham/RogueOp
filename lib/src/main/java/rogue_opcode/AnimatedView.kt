@@ -21,7 +21,7 @@ import android.util.Log
 import android.view.KeyEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
-import rogue_opcode.ScreenElement.Companion.sAllSEs
+import rogue_opcode.DrawableElement.Companion.sAllSEs
 import rogue_opcode.geometrics.XYf
 
 
@@ -29,7 +29,7 @@ open class AnimatedView(pContext: Context)
 	: SurfaceView(pContext), SurfaceHolder.Callback, Runnable {
 	companion object {
 		// self-refs
-		lateinit var sOnly: AnimatedView
+		var sOnly: AnimatedView? = null
 		var sRenderThread: Thread? = null
 		var sCurrentCanvas: Canvas? = null
 
@@ -125,13 +125,13 @@ open class AnimatedView(pContext: Context)
 		GameProc.sOnly.mCurrentKey = pKeyCode
 		GameProc.sOnly.mKeys[pKeyCode] = true
 
-		return (pKeyCode != KeyEvent.KEYCODE_BACK)
+		return false//(pKeyCode != KeyEvent.KEYCODE_BACK)
 	}
 
 	override fun onKeyUp(pKeyCode: Int, pEvent: KeyEvent): Boolean {
 		GameProc.sOnly.mKeys[pKeyCode] = false
 
-		return true
+		return false
 	}
 
 	// screen and drawing properties ///////////////////////////////////////////
@@ -148,6 +148,10 @@ open class AnimatedView(pContext: Context)
 
 	fun DisableEffectsHook() {
 		mEffectsEnabled = false
+		mEffectsHookCanvas?.setBitmap(null)
+		mEffectsHookCanvas = null
+		mEffectsHookBitmap?.recycle()
+		mEffectsHookBitmap = null
 	}
 
 	/**
@@ -248,9 +252,10 @@ open class AnimatedView(pContext: Context)
 	protected fun draw() {
 		val tCanvas = mHolder.lockCanvas() ?: return
 
-		ScreenElement.sActiveSECount = 0			//performance monitor variable keeps track of visible count of SEs
+		//performance monitor variable keeps track of visible count of SEs
 		//This is important because now we can unload graphics but unloading them
 		//does not stop the draw proc.
+		DrawableElement.sActiveSECount = 0
 
 		// Draw the "keep-centered" graphic
 		// (You are not expected to understand this—I don't!)
@@ -280,8 +285,7 @@ open class AnimatedView(pContext: Context)
 		}
 
 		tCanvas.drawRGB(0, 0, 0) // TODO: parameterize whether to do this
-//		ScreenElement.sAllSEs.mDirty = true
-		ScreenElement.sAllSEs.SortIfDirty()
+		sAllSEs.SortIfDirty()
 		loopAndDrawSEs(false)
 
 		if(mEffectsEnabled) {
@@ -301,8 +305,7 @@ open class AnimatedView(pContext: Context)
 				drawText("FPS:  " + GameProc.sOnly.FPS(), 10f, 22f, mPaint)
 				drawText("#1:  " + mDebugString1, 10f, 34f, mPaint)
 				drawText("#2:  " + mDebugString2, 10f, 46f, mPaint)
-				drawText(GameProc.sOnly.touchState.MainTouchPos().toString(),
-				         10f, 58f, mPaint)
+				drawText(TouchState.MainTouchPos().toString(), 10f, 58f, mPaint)
 			}
 		}
 
@@ -312,9 +315,9 @@ open class AnimatedView(pContext: Context)
 
 	private fun loopAndDrawSEs(pTopmost: Boolean) {
 		for(tSE in sAllSEs) {
-			if(tSE.Visible && pTopmost == tSE.Topmost()) {
-				ScreenElement.sActiveSECount++
-				tSE.Draw()
+			if(tSE.Visible && pTopmost == tSE.Topmost) {
+				DrawableElement.sActiveSECount++
+				tSE.Draw(sCurrentCanvas!!, mPreScaler, mPaint)
 			}
 		}
 	}
@@ -338,5 +341,12 @@ open class AnimatedView(pContext: Context)
 	override fun surfaceDestroyed(holder: SurfaceHolder) {
 		Log.d(GameProc.TAG, "surfaceDestroyed()")
 		synchronized(this) { mHasSurface = false }
+	}
+
+	// lifecycle ///////////////////////////////////////////////////////////////
+
+	override fun onDetachedFromWindow() {
+		sOnly = null
+		super.onDetachedFromWindow()
 	}
 }

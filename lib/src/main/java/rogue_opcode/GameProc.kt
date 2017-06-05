@@ -74,7 +74,6 @@ abstract class GameProc : Activity(), Runnable, OnGestureListener {
 	private var mMousePos = XYf()
 
 	private var mMotionDetector: GestureDetector? = null
-	val touchState = TouchState()
 
 	internal var mCurrentKey: Int = 0
 	internal var mKeys = BooleanArray(525)
@@ -151,7 +150,7 @@ abstract class GameProc : Activity(), Runnable, OnGestureListener {
 		// start the render and update threads
 		sUpdateThread = Thread(this, "Rogue-Op Update Thread").apply { start() }
 		AnimatedView.StartRenderThread()
-		AnimatedView.sOnly.requestFocus()
+		AnimatedView.sOnly!!.requestFocus()
 
 		// clean some up now to avoid latency later
 		Runtime.getRuntime().gc()
@@ -173,7 +172,7 @@ abstract class GameProc : Activity(), Runnable, OnGestureListener {
 
 		// shut down
 		Die()
-		AnimatedView.sOnly.Die()
+		AnimatedView.sOnly!!.Die()
 		AudioResource.Die() // stop and free all audio resources
 		SoundEffect.Die() // free the sound pool
 
@@ -225,7 +224,7 @@ abstract class GameProc : Activity(), Runnable, OnGestureListener {
 				synchronized(this) {
 					sSeconds++
 					mElapsedTime -= 1000
-					sFPS = AnimatedView.sOnly.FPS().toLong()
+					sFPS = AnimatedView.sOnly!!.FPS().toLong()
 				}
 			}
 
@@ -255,7 +254,7 @@ abstract class GameProc : Activity(), Runnable, OnGestureListener {
 			if(tAE.Active()) tAE.Update()
 		}
 
-		touchState.Clear(true)
+		TouchState.Clear(true)
 	}
 
 	//AddView allows the user to pass a view (typically a layout that was inflated from XML) to be added above the normal AnimatedView Surface.
@@ -279,14 +278,14 @@ abstract class GameProc : Activity(), Runnable, OnGestureListener {
 			mLayout.postDelayed({
                 tParams.run {
 	                mRLP?.setMargins(
-		                (mQueuedViewLocation!!.x * AnimatedView.sOnly.mPreScaler).toInt(),
-		                (mQueuedViewLocation!!.y * AnimatedView.sOnly.mPreScaler).toInt(),
+		                (mQueuedViewLocation!!.x * AnimatedView.sOnly!!.mPreScaler).toInt(),
+		                (mQueuedViewLocation!!.y * AnimatedView.sOnly!!.mPreScaler).toInt(),
 		                0, 0)
 	                mRL?.layoutParams = mRLP
 
 	                mEdit?.run {
 		                visibility = View.VISIBLE
-		                width = (mWidth * AnimatedView.sOnly.mPreScaler).toInt()
+		                width = (mWidth * AnimatedView.sOnly!!.mPreScaler).toInt()
 		                transformationMethod = android.text.method.SingleLineTransformationMethod()
 		                maxLines = 1
 		                setBackgroundColor(Color.BLUE)
@@ -328,17 +327,16 @@ abstract class GameProc : Activity(), Runnable, OnGestureListener {
 		}
 
 	fun HideTextEditor(pCurrentTE: TextSE) {
-		val tParams = mEditTextParams?.takeIf { pCurrentTE === it.mCurrentTE } ?: return
-		try {
-			mLayout.post {
-				tParams.mEdit?.visibility = View.INVISIBLE
-				try {
-					val tIMM = getSystemService(Context.INPUT_METHOD_SERVICE)
-						as InputMethodManager
-					tIMM.hideSoftInputFromWindow(tParams.mEdit?.windowToken, 0)
-				} catch(e: Exception) { /* nothing */ }
-			}
-		} catch(e: Exception) { /* nothing */ }
+		val tParams = mEditTextParams?.takeIf {
+			pCurrentTE === it.mCurrentTE
+		} ?: return
+
+		mLayout.post {
+			tParams.mEdit?.visibility = View.INVISIBLE
+			val tIMM = getSystemService(Context.INPUT_METHOD_SERVICE)
+				as InputMethodManager
+			tIMM.hideSoftInputFromWindow(tParams.mEdit?.windowToken, 0)
+		}
 	}
 
 	// runtime stats ///////////////////////////////////////////////////////////
@@ -381,27 +379,27 @@ abstract class GameProc : Activity(), Runnable, OnGestureListener {
 
 	override fun onFling(e1: MotionEvent, e2: MotionEvent, velocityX: Float,
 						 velocityY: Float): Boolean {
-		touchState.SetState(TouchState.FLING, e1, e2)
+		TouchState.SetState(TouchState.FLING, e1, e2)
 		return false
 	}
 
 	override fun onLongPress(e: MotionEvent) {
-		touchState.SetState(TouchState.LONG_TOUCH, e, null)
+		TouchState.SetState(TouchState.LONG_TOUCH, e, null)
 	}
 
 	override fun onScroll(e1: MotionEvent, e2: MotionEvent, distanceX: Float,
 						  distanceY: Float): Boolean {
-		AnimatedView.sOnly.mDebugString1 = distanceY.toString() + ""
+		AnimatedView.sOnly!!.mDebugString1 = distanceY.toString() + ""
 
 		//if(Math.abs(distanceY) > 1.5f)
-		touchState.SetState(TouchState.SCROLL, e1, e2, distanceY, distanceX)
+		TouchState.SetState(TouchState.SCROLL, e1, e2, distanceY, distanceX)
 		return false
 	}
 
 	override fun onShowPress(e: MotionEvent) {}
 
 	override fun onSingleTapUp(e: MotionEvent): Boolean {
-		touchState.SetState(TouchState.SINGLE_TAP, e, null)
+		TouchState.SetState(TouchState.SINGLE_TAP, e, null)
 		return false
 	}
 
@@ -415,7 +413,7 @@ abstract class GameProc : Activity(), Runnable, OnGestureListener {
 	 * @Override
 	 * public boolean onDoubleTap(MotionEvent e)
 	 * {
-	 * touchState.SetState(TouchState.DOUBLE_TAP, e, null);
+	 * TouchState.SetState(TouchState.DOUBLE_TAP, e, null);
 	 * return false;
 	 * }
 	 *
@@ -429,7 +427,7 @@ abstract class GameProc : Activity(), Runnable, OnGestureListener {
 	 * @Override
 	 * public boolean onSingleTapConfirmed(MotionEvent e)
 	 * {
-	 * //touchState.SetState(TouchState.SINGLE_TAP, e, null);
+	 * //TouchState.SetState(TouchState.SINGLE_TAP, e, null);
 	 * return false;
 	 * }
 	 */

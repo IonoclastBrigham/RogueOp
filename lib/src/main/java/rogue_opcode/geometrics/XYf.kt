@@ -28,10 +28,12 @@ open class XYf
 
 	companion object {
 		private const val serialVersionUID = -3490122379205325810L
+
+		val ZERO = XYf()
 	}
 
 
-	constructor(pSourceXY: XYf) : this(pSourceXY.x, pSourceXY.y) {}
+	constructor(pSourceXY: XYf) : this(pSourceXY.x, pSourceXY.y)
 
 	// blah
 	override fun toString(): String {
@@ -95,4 +97,7 @@ open class XYf
 		y /= tMag
 		return this
 	}
+
+	operator fun component1() = x
+	operator fun component2() = y
 }
